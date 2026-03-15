@@ -14,6 +14,7 @@ import '../models/mood_model.dart';
 import '../widgets/mood_indigo.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
+// RIO PR bot test #2: small edit for second PR
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
