@@ -43,6 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Currently using in-memory data only. No backend call here — adding a
+    // fetch (e.g. for catalog, user playlists, or recommendations) would
+    // require an API endpoint and would keep content fresh without app updates.
     List<Song> songs = Song.songs;
     List<Playlist> playlists= Playlist.playlists;
     List<Mood> moods=Mood.moods;
