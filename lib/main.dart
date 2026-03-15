@@ -10,6 +10,7 @@ import 'models/artist_model.dart';
 import 'models/raag_model.dart';
 
 
+// RIO PR bot test: small edit to trigger API endpoint discovery
 void main() {
   runApp(const MyApp());
 }
