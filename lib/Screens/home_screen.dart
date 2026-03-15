@@ -23,11 +23,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// REST path for catalog fetch (GET). Used by [fetchSongsFromApi].
+  static const String _apiSongsPath = '/api/v1/songs';
+  /// REST path for playlists (GET). Used by [fetchPlaylistsFromApi].
+  static const String _apiPlaylistsPath = '/api/v1/playlists';
+
   @override
   void initState() {
     // TODO: implement initState
     showTrivia();
     super.initState();
+  }
+
+
+  Future<List<Song>> fetchSongsFromApi() async {
+    return Song.songs;
+  }
+
+  /// Fetches playlists from backend. Mirrors GET _apiPlaylistsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Playlist>> fetchPlaylistsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiPlaylistsPath'))
+    return Playlist.playlists;
   }
 
   Future<void> showTrivia() async{
@@ -43,6 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Currently using in-memory data only. No backend call here — adding a
+    // fetch (e.g. for catalog, user playlists, or recommendations) would
     List<Song> songs = Song.songs;
     List<Playlist> playlists= Playlist.playlists;
     List<Mood> moods=Mood.moods;
