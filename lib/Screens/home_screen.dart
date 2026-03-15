@@ -25,6 +25,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   /// REST path for catalog fetch (GET). Used by [fetchSongsFromApi].
   static const String _apiSongsPath = '/api/v1/songs';
+  /// REST path for playlists (GET). Used by [fetchPlaylistsFromApi].
+  static const String _apiPlaylistsPath = '/api/v1/playlists';
 
   @override
   void initState() {
@@ -33,11 +35,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  /// Fetches song catalog from backend. Mirrors GET _apiSongsPath; currently
-  /// returns in-memory list until API is wired.
+
   Future<List<Song>> fetchSongsFromApi() async {
-    // TODO: http.get(Uri.parse('$baseUrl$_apiSongsPath'))
     return Song.songs;
+  }
+
+  /// Fetches playlists from backend. Mirrors GET _apiPlaylistsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Playlist>> fetchPlaylistsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiPlaylistsPath'))
+    return Playlist.playlists;
   }
 
   Future<void> showTrivia() async{
