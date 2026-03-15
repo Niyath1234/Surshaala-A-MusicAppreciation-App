@@ -27,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   static const String _apiSongsPath = '/api/v1/songs';
   /// REST path for playlists (GET). Used by [fetchPlaylistsFromApi].
   static const String _apiPlaylistsPath = '/api/v1/playlists';
+  /// REST path for moods (GET). Used by [fetchMoodsFromApi].
+  static const String _apiMoodsPath = '/api/v1/moods';
 
   @override
   void initState() {
@@ -45,6 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<Playlist>> fetchPlaylistsFromApi() async {
     // TODO: http.get(Uri.parse('$baseUrl$_apiPlaylistsPath'))
     return Playlist.playlists;
+  }
+
+  /// Fetches moods from backend. Mirrors GET _apiMoodsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Mood>> fetchMoodsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiMoodsPath'))
+    return Mood.moods;
   }
 
   Future<void> showTrivia() async{
