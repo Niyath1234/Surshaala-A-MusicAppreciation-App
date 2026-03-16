@@ -10,6 +10,7 @@ import '../widgets/song_card.dart';
 import '../models/playist_model.dart';
 import '../widgets/playlist_card.dart';
 import '../widgets/section_header.dart';
+import '../models/artist_model.dart';
 import '../models/mood_model.dart';
 import '../widgets/mood_indigo.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -23,11 +24,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// REST path for catalog fetch (GET). Used by [fetchSongsFromApi].
+  static const String _apiSongsPath = '/api/v1/songs';
+  /// REST path for playlists (GET). Used by [fetchPlaylistsFromApi].
+  static const String _apiPlaylistsPath = '/api/v1/playlists';
+  /// REST path for moods (GET). Used by [fetchMoodsFromApi].
+  static const String _apiMoodsPath = '/api/v1/moods';
+  /// REST path for artists (GET). Used by [fetchArtistsFromApi].
+  static const String _apiArtistsPath = '/api/v1/artists';
+
   @override
   void initState() {
     // TODO: implement initState
     showTrivia();
     super.initState();
+  }
+
+
+  Future<List<Song>> fetchSongsFromApi() async {
+    return Song.songs;
+  }
+
+  /// Fetches playlists from backend. Mirrors GET _apiPlaylistsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Playlist>> fetchPlaylistsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiPlaylistsPath'))
+    return Playlist.playlists;
+  }
+
+  /// Fetches moods from backend. Mirrors GET _apiMoodsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Mood>> fetchMoodsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiMoodsPath'))
+    return Mood.moods;
+  }
+
+  /// Fetches artists from backend. Mirrors GET _apiArtistsPath; currently
+  /// returns in-memory list until API is wired.
+  Future<List<Artist>> fetchArtistsFromApi() async {
+    // TODO: http.get(Uri.parse('$baseUrl$_apiArtistsPath'))
+    return Artist.artists;
   }
 
   Future<void> showTrivia() async{
@@ -43,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Currently using in-memory data only. No backend call here — adding a
+    // fetch (e.g. for catalog, user playlists, or recommendations) would
     List<Song> songs = Song.songs;
     List<Playlist> playlists= Playlist.playlists;
     List<Mood> moods=Mood.moods;
