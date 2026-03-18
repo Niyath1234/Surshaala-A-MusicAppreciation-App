@@ -10,7 +10,7 @@ class MoodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
         onTap: (){
-      Get.toNamed('/mood');
+      Get.toNamed('/mood', arguments: mood);
     },
     child: Container(
     margin: const EdgeInsets.only(right: 10),

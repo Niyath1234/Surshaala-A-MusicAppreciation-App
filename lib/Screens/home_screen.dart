@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '/Screens/artist_screen.dart';
 import '/Screens/song_screen.dart';
 import '/Screens/tanpura_screen.dart';
@@ -23,14 +24,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _nameController =
+      TextEditingController(text: 'Niyath Nair');
+  String _searchQuery = '';
+  String _listenerName = 'Niyath Nair';
+  String _selectedMoodTitle = Mood.moods.first.title;
+  String _actionMessage = 'Use the search and quick actions to explore music.';
+
   @override
   void initState() {
-    // TODO: implement initState
     showTrivia();
     super.initState();
   }
 
-  Future<void> showTrivia() async{
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> showTrivia() async {
     await Future.delayed(Duration.zero, () {
       showDialog(
         context: context,
@@ -40,12 +55,66 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  List<Song> _filterSongs(List<Song> songs) {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return songs;
+    }
+
+    return songs.where((song) {
+      return song.title.toLowerCase().contains(query) ||
+          song.description.toLowerCase().contains(query) ||
+          song.raag.toLowerCase().contains(query) ||
+          song.taal.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  List<Playlist> _filterPlaylists(List<Playlist> playlists) {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return playlists;
+    }
+
+    return playlists.where((playlist) {
+      return playlist.title.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  void _showActionFeedback(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _handleQuickAction() {
+    final name = _listenerName.trim().isEmpty ? 'Listener' : _listenerName.trim();
+    final message =
+        'Hi $name, your $_selectedMoodTitle is ready. Tap a card to continue.';
+
+    setState(() {
+      _actionMessage = message;
+    });
+    _showActionFeedback(message);
+  }
+
+  void _playRandomSong(List<Song> songs) {
+    final pool = songs.isEmpty ? Song.songs : songs;
+    final song = pool[Random().nextInt(pool.length)];
+
+    setState(() {
+      _actionMessage = 'Playing a surprise pick: ${song.title}';
+    });
+    _showActionFeedback('Opening ${song.title}');
+    Get.toNamed('/song', arguments: song);
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Song> songs = Song.songs;
-    List<Playlist> playlists= Playlist.playlists;
-    List<Mood> moods=Mood.moods;
+    final List<Song> songs = Song.songs;
+    final List<Playlist> playlists = Playlist.playlists;
+    final List<Mood> moods = Mood.moods;
+    final List<Song> filteredSongs = _filterSongs(songs);
+    final List<Playlist> filteredPlaylists = _filterPlaylists(playlists);
 
     return Container(
       decoration: BoxDecoration(
@@ -60,13 +129,47 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
           child:Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: const _CustomAppBar(),
+        appBar: _CustomAppBar(
+          onMenuTap: () {
+            _showActionFeedback(
+              'Home actions are active. Try searching, choosing a mood, or playing a surprise song.',
+            );
+          },
+        ),
             bottomNavigationBar:const  _CustomNavBar(),
             body: SingleChildScrollView(
               child: Column(
                 children: [
-                  const _DiscoverMusic(),
-                  _TrendingMusic(songs: songs),
+                  _DiscoverMusic(
+                    searchController: _searchController,
+                    nameController: _nameController,
+                    listenerName: _listenerName,
+                    selectedMoodTitle: _selectedMoodTitle,
+                    actionMessage: _actionMessage,
+                    moods: moods,
+                    onSearchChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    onNameChanged: (value) {
+                      setState(() {
+                        _listenerName = value;
+                      });
+                    },
+                    onMoodChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setState(() {
+                        _selectedMoodTitle = value;
+                        _actionMessage = 'Selected mood: $value';
+                      });
+                    },
+                    onPrimaryAction: _handleQuickAction,
+                    onShuffleAction: () => _playRandomSong(filteredSongs),
+                  ),
+                  _TrendingMusic(songs: filteredSongs),
                   const SizedBox(height: 14.0),
                   _AfternoonHeat(moods: moods),
                   const SizedBox(height: 6.0),
@@ -76,13 +179,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const SectionHeader(title: 'Playlists'),
                         const SizedBox(height: 20,),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: playlists.length,
-                            itemBuilder: ((context,index){
-                              return PlaylistCard(playlist: playlists[index]);
-                            }
-                            )),
+                        filteredPlaylists.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12.0),
+                                child: Text('No playlists match your search yet.'),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filteredPlaylists.length,
+                                itemBuilder: ((context,index){
+                                  return PlaylistCard(playlist: filteredPlaylists[index]);
+                                }
+                                )),
                     ],
                     ),
                   )
@@ -128,14 +237,20 @@ class _AfternoonHeat extends StatelessWidget{
   }
   }
 class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _CustomAppBar({Key? key}) : super(key: key);
+  const _CustomAppBar({Key? key, required this.onMenuTap}) : super(key: key);
+
+  final VoidCallback onMenuTap;
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: const Icon(Icons.grid_view_rounded),title: Text('           SURSHAALA'),
+      leading: IconButton(
+        onPressed: onMenuTap,
+        icon: const Icon(Icons.grid_view_rounded),
+      ),
+      title: const Text('           SURSHAALA'),
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 20),
@@ -157,6 +272,13 @@ class _TrendingMusic extends StatelessWidget{
   final List<Song> songs;
   @override
   Widget build(BuildContext context) {
+    if (songs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        child: Text('No songs found. Try a different search.'),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 10.0, top: 10.0, bottom: 20.0),
       child: Column(
@@ -255,7 +377,32 @@ class _CustomNavBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _DiscoverMusic extends StatelessWidget implements PreferredSizeWidget {
-  const _DiscoverMusic({Key? key}) : super(key: key);
+  const _DiscoverMusic({
+    Key? key,
+    required this.searchController,
+    required this.nameController,
+    required this.listenerName,
+    required this.selectedMoodTitle,
+    required this.actionMessage,
+    required this.moods,
+    required this.onSearchChanged,
+    required this.onNameChanged,
+    required this.onMoodChanged,
+    required this.onPrimaryAction,
+    required this.onShuffleAction,
+  }) : super(key: key);
+
+  final TextEditingController searchController;
+  final TextEditingController nameController;
+  final String listenerName;
+  final String selectedMoodTitle;
+  final String actionMessage;
+  final List<Mood> moods;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<String?> onMoodChanged;
+  final VoidCallback onPrimaryAction;
+  final VoidCallback onShuffleAction;
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +423,7 @@ class _DiscoverMusic extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(height: 4,),
           Text(
-            '  Niyath Nair',
+            '  ${listenerName.trim().isEmpty ? 'Music Lover' : listenerName}',
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
               // Add your desired font size here
               fontSize: 24,
@@ -285,6 +432,8 @@ class _DiscoverMusic extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(height: 30,),
           TextFormField(
+            controller: searchController,
+            onChanged: onSearchChanged,
             decoration: InputDecoration(
               isDense: true,
               filled: true,
@@ -301,7 +450,93 @@ class _DiscoverMusic extends StatelessWidget implements PreferredSizeWidget {
                 borderSide: BorderSide.none,
               ),
             ),
-          )
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: nameController,
+            onChanged: onNameChanged,
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              hintText: 'Enter your name',
+              hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                fontSize: 16,
+                color: Colors.grey.shade400,
+              ),
+              prefixIcon: Icon(Icons.person_outline, color: Colors.grey.shade400),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15.0),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: selectedMoodTitle,
+            onChanged: onMoodChanged,
+            dropdownColor: const Color.fromARGB(255, 23, 0, 92),
+            iconEnabledColor: Colors.white,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.16),
+              labelText: 'Choose a mood',
+              labelStyle: const TextStyle(color: Colors.white),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15.0),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            items: moods
+                .map(
+                  (mood) => DropdownMenuItem<String>(
+                    value: mood.title,
+                    child: Text(mood.title),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: onPrimaryAction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 16, 255, 255),
+                    foregroundColor: const Color.fromARGB(255, 23, 0, 92),
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.0),
+                    ),
+                  ),
+                  child: const Text('Submit Action'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onShuffleAction,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white70),
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.0),
+                    ),
+                  ),
+                  child: const Text('Surprise Me'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            actionMessage,
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                  color: Colors.white70,
+                ),
+          ),
         ],
 
       ),

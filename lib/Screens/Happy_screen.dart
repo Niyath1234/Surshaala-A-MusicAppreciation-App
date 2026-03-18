@@ -11,7 +11,7 @@ class HappyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Playlist playlist = Playlist.playlists[0];
-    Mood mood=Mood.moods[0];
+    Mood mood = Get.arguments ?? Mood.moods[0];
 
     return Container(
       decoration: BoxDecoration(
