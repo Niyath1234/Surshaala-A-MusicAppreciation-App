@@ -20,8 +20,19 @@ class SongScreen extends StatefulWidget {
 }
 
 class _SongScreenState extends State<SongScreen> {
+  /// REST path for favorites (POST/DELETE). Used by [toggleFavoriteForSong].
+  static const String _apiFavoritesPath = '/api/v1/favorites';
+
   AudioPlayer audioPlayer = AudioPlayer();
   Song song = Get.arguments ?? Song.songs[0];
+
+  /// Toggles a song in the user's favorites list.
+  /// Mirrors POST/DELETE _apiFavoritesPath; currently a no-op until API is wired.
+  Future<void> toggleFavoriteForSong({required String songId, required bool isFavorite}) async {
+    // TODO: if (isFavorite) http.delete(Uri.parse('$baseUrl$_apiFavoritesPath/$songId'))
+    // else http.post(Uri.parse('$baseUrl$_apiFavoritesPath'), body: {'songId': songId})
+    return;
+  }
 
   @override
   void initState() {
